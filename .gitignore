@@ -1,0 +1,14 @@
+/.metadata/
+
+*.fdt
+
+\.recommenders/index/http___download_eclipse_org_recommenders_models_oxygen_/
+
+UpdateSuppression/\.settings/
+
+UpdateSuppression/\.bin/
+
+UpdateSuppression/\.project
+
+UpdateSuppression/\.classpath
+
