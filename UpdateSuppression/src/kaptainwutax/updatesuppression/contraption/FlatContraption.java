@@ -1,16 +1,18 @@
 package kaptainwutax.updatesuppression.contraption;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 
 import kaptainwutax.updatesuppression.BlockPos;
 
 public class FlatContraption {
-	public BlockRedstoneWire[][] contraption;
+	
+	public int[][] contraption;	
+	private int[][] contraptionTemp;
+	
 	public BlockPos powerPos;
 	public int powerPosValue;
-	private int sizeX = 0;
-	private int sizeZ = 0;
+	private int sizeX = contraption[0].length;
+	private int sizeZ = contraption.length;
 	
 	private BlockPos[] blockUpdateOrder = {
 			new BlockPos().west(),
@@ -21,62 +23,96 @@ public class FlatContraption {
 			new BlockPos().south()
 	};
 	
-	public FlatContraption(BlockRedstoneWire[][] contraption, BlockPos powerPos, int value) {
-		this.contraption = contraption;
-		
-		sizeX = contraption[0].length;
-		sizeZ = contraption.length;
+	public FlatContraption(int[][] contraptionMap, BlockPos powerPos, int value) {	
+		this.contraption = contraptionMap;
 		
 		this.powerPos = powerPos;
 		this.powerPosValue = value;
+		
+		this.contraptionTemp = new int[this.sizeZ][this.sizeX];	
+		this.resetTempContraption();
+	}
+	
+	
+	public static void main(String[] args) {
+		int[][] contraptionMap = {
+				{dust(0), dust(0), dust(0), dust(0), dust(0)},
+				{dust(0), none(), none(), none(), dust(0)},
+				{dust(0), none(), dust(0), none(), dust(0)},
+				{dust(0), none(), dust(0), dust(0), dust(0)},
+				{dust(0), none(),  dust(0),  none(),  none()}
+		};
+		
+		BlockPos mainPos = new BlockPos(2, 0, 2);
+		int mainPosPower = 0;
+		
+		FlatContraption flatContraption = new FlatContraption(contraptionMap, mainPos, mainPosPower);
+		
+		//contraption.getDepth(0, mainPos, -1, true);
+		//System.out.println("Depth is " + contraption.highestDepth + ".");
+		
+		int[] result = flatContraption.searchForDeepest();
+		System.out.println("Deepest is " + result[0] + " with hash of " + result[1] + ".");
+	}
+	
+	public static int dust(int power) {
+		return power;
+	}
+	
+	public static int none() {
+		return -1;
 	}
 	
 	public int[] searchForDeepest() {
 		int deepestCall = 0;
-		ArrayList<Integer> deepestCallHash = new ArrayList<Integer>();
+		int deepestCallHash = 0;
 		
-		//Does the search.
 		int searchHash = 0;
 		do {
-			int callDepth = getDepth(searchHash, new BlockPos(), 0);
+			getDepth(searchHash, this.powerPos, -1, false);
+			int callDepth = this.highestDepth;
+			this.highestDepth = 0;
+			resetTempContraption();
 			
 			if(callDepth > deepestCall) {
 				deepestCall = callDepth;
-				deepestCallHash.clear();
-				deepestCallHash.add(searchHash);
-			} else if(callDepth == deepestCall) {
-				deepestCallHash.add(searchHash);
+				deepestCallHash = searchHash;
 			}
+			
+			if((searchHash & ((1 << 10) - 1)) == 0)System.out.println("Current search hash is " + searchHash + " with deepest " + deepestCall + " at hash " + deepestCallHash + ".");
 			
 			++searchHash;
 		} while(searchHash != 0);
 		
 		//Generates the solution array for returning.
-		int[] solution = new int[deepestCallHash.size() + 1];
-		solution[0] = deepestCall;
-		
-		for(int i = 0; i < deepestCallHash.size(); ++i) {
-			solution[i + 1] = deepestCallHash.get(i);			
-		}
-		
+		int[] solution = {deepestCall, deepestCallHash};		
 		return solution;
+	}
+
+	private void resetTempContraption() {	
+		for(int z = 0; z < this.sizeZ; ++z) {
+			for(int x = 0; x < this.sizeZ; ++x) {
+				this.contraptionTemp[z][x] = this.contraption[z][x];		
+			}			
+		}		
 	}
 
 	public int highestDepth = 0;
 	
-	public int getDepth(int searchHash, BlockPos pos, int currentDepth) {		
+	public int getDepth(int searchHash, BlockPos pos, int currentDepth, boolean printMap) {		
 		int posX = pos.getX();
 		int posZ = pos.getZ();
-		if(posX < 0 || posX >= sizeX || posZ < 0 || posZ >= sizeZ)return 0;
+		if(posX < 0 || posX >= this.sizeX || posZ < 0 || posZ >= this.sizeZ)return highestDepth;
 		
-		if(currentDepth > highestDepth)highestDepth = currentDepth;
+		if(currentDepth > this.highestDepth)this.highestDepth = currentDepth;
 		
-		BlockRedstoneWire dust = contraption[posZ][posX];
-		if(dust == null)return 0;
+		int dustPowerLevel = this.contraptionTemp[posZ][posX];
+		
+		if(dustPowerLevel == -1)return this.highestDepth;
 		
 		HashSet<BlockPos> notifiers = null;
 		
-		int powerLevel = dust.getPowerLevel();
+		int powerLevel = dustPowerLevel;
 		int expectedPowerLevel = powerLevel;
 		int highestPowerNeighbor = 0;
 		
@@ -92,11 +128,11 @@ public class FlatContraption {
 			int x = newPos.getX();
 			int z = newPos.getZ();
 			
-			if(x < 0 || x >= sizeX || z < 0 || z >= sizeZ)continue;
+			if(x < 0 || x >= this.sizeX || z < 0 || z >= this.sizeZ)continue;
 				
-			BlockRedstoneWire newDust = contraption[z][x];
-			if(contraption[z][x] == null)continue;
-			highestPowerNeighbor = Math.max(highestPowerNeighbor, newDust.getPowerLevel());
+			int newDust = this.contraptionTemp[z][x];
+			if(this.contraptionTemp[z][x] == -1)continue;
+			highestPowerNeighbor = Math.max(highestPowerNeighbor, newDust);
 		}
 		
         if(highestPowerNeighbor > expectedPowerLevel) {
@@ -108,25 +144,25 @@ public class FlatContraption {
         	expectedPowerLevel = 0;
         }
         
-        if(powerLevel == this.powerPosValue)return 0;
+        if(powerLevel == this.powerPosValue)return highestDepth;
         
         if(pos.equals(this.powerPos))expectedPowerLevel = this.powerPosValue;
         
         if(powerLevel != expectedPowerLevel) { 
-    		dust.setPowerLevel(expectedPowerLevel);
-			printMap(pos);
+        	this.contraptionTemp[posZ][posX] = expectedPowerLevel;
+			if(printMap)printMap(pos);
 	        notifiers = pos.getNotifiersWithHash(searchHash);
 	        
 	        for(BlockPos notifier : notifiers) {
-	        	for(BlockPos blockUpdate : blockUpdateOrder) {
-	        		BlockPos newPos = notifier.add(blockUpdate);
+	        	for(BlockPos blockUpdate : this.blockUpdateOrder) {
+	        		BlockPos newPos = notifier.add(new BlockPos(-searchHash, 0, 0)).add(blockUpdate);
 	        		if(newPos.getY() == 0) {	        			
-	        			getDepth(searchHash, newPos, currentDepth + 1);
+	        			getDepth(BlockPos.moveHash(searchHash, newPos), newPos, currentDepth + 1, printMap);
 	        		}
 	        	}
 	        }
         }		
-		return 0;
+		return this.highestDepth;
 	}
 
 	private void printMap(BlockPos pos) {
@@ -136,11 +172,11 @@ public class FlatContraption {
 				if(pos.equals(new BlockPos(x, 0, z)))System.out.print("[");
 				else System.out.print(" ");
 				
-				if(this.contraption[z][x] == null)System.out.print("   ");
+				if(this.contraptionTemp[z][x] == -1)System.out.print("   ");
 				else {
-					if(this.contraption[z][x].getPowerLevel() < 10)System.out.print(" ");
+					if(this.contraptionTemp[z][x] < 10)System.out.print(" ");
 					
-					System.out.print(this.contraption[z][x].getPowerLevel());				
+					System.out.print(this.contraptionTemp[z][x]);				
 					if(pos.equals(new BlockPos(x, 0, z)))System.out.print("]");
 					else System.out.print(" ");				
 				

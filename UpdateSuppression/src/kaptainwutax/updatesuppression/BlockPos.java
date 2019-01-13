@@ -92,5 +92,12 @@ public class BlockPos {
 		notifiers.add(this.east().addX(hash));
 		return notifiers;
 	}
+
+	public static int moveHash(int searchHash, BlockPos blockUpdate) {
+		searchHash += blockUpdate.getX();
+		searchHash += blockUpdate.getY() * 31;
+		searchHash += blockUpdate.getZ() * 961;
+		return searchHash;
+	}
 	
 }

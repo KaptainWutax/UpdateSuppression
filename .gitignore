@@ -12,3 +12,5 @@ UpdateSuppression/\.project
 
 UpdateSuppression/\.classpath
 
+
+\.recommenders/caches/
