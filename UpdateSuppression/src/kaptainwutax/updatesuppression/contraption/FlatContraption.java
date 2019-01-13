@@ -51,7 +51,11 @@ public class FlatContraption {
 		
 		FlatContraption flatContraption = new FlatContraption(contraptionMap, mainPos, mainPosPower);
 		
-		flatContraption.getDepth(0, mainPos, -1, true);
+		//First parameter is the world position of the upper-left corner in the array. So the most -X and -Z.
+		//Next is the position of the the dust that gets updated first.
+		//Third is just the start depth, always -1.
+		//Fourth is there if you want to print steps in console or not.
+		flatContraption.getDepth(new BlockPos(0, 0, 0), mainPos, -1, true);
 		System.out.println("Depth is " + flatContraption.highestDepth + ".");
 		
 		//int[] result = flatContraption.searchForDeepest();
@@ -72,7 +76,7 @@ public class FlatContraption {
 		
 		int searchHash = 0;
 		do {
-			getDepth(searchHash, this.powerPos, -1, false);
+			getDepth(new BlockPos(searchHash, 0, 0), this.powerPos, -1, false);
 			int callDepth = this.highestDepth;
 			this.highestDepth = 0;
 			resetTempContraption();
@@ -102,7 +106,7 @@ public class FlatContraption {
 
 	public int highestDepth = 0;
 	
-	public int getDepth(int searchHash, BlockPos pos, int currentDepth, boolean printMap) {		
+	public int getDepth(BlockPos searchHash, BlockPos pos, int currentDepth, boolean printMap) {		
 		int posX = pos.getX();
 		int posZ = pos.getZ();
 		if(posX < 0 || posX >= this.sizeX || posZ < 0 || posZ >= this.sizeZ)return highestDepth;
@@ -154,13 +158,13 @@ public class FlatContraption {
         if(powerLevel != expectedPowerLevel) { 
         	this.contraptionTemp[posZ][posX] = expectedPowerLevel;
 			if(printMap)printMap(pos);
-	        notifiers = pos.getNotifiersWithHash(searchHash);
+	        notifiers = pos.getNotifiersWithHash(searchHash.getX());
 	        
 	        for(BlockPos notifier : notifiers) {
 	        	for(BlockPos blockUpdate : this.blockUpdateOrder) {
-	        		BlockPos newPos = notifier.add(new BlockPos(-searchHash, 0, 0)).add(blockUpdate);
+	        		BlockPos newPos = notifier.add(new BlockPos(-searchHash.getX(), 0, 0)).add(blockUpdate);
 	        		if(newPos.getY() == 0) {	        			
-	        			getDepth(BlockPos.moveHash(searchHash, newPos), newPos, currentDepth + 1, printMap);
+	        			getDepth(new BlockPos(BlockPos.moveHash(searchHash.getX(), newPos), 0 , 0), newPos, currentDepth + 1, printMap);
 	        		}
 	        	}
 	        }
