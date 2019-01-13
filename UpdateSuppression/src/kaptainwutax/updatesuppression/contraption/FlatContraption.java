@@ -11,8 +11,8 @@ public class FlatContraption {
 	
 	public BlockPos powerPos;
 	public int powerPosValue;
-	private int sizeX = contraption[0].length;
-	private int sizeZ = contraption.length;
+	private int sizeX;
+	private int sizeZ;
 	
 	private BlockPos[] blockUpdateOrder = {
 			new BlockPos().west(),
@@ -29,6 +29,9 @@ public class FlatContraption {
 		this.powerPos = powerPos;
 		this.powerPosValue = value;
 		
+		sizeX = this.contraption[0].length;
+		sizeZ = this.contraption.length;
+		
 		this.contraptionTemp = new int[this.sizeZ][this.sizeX];	
 		this.resetTempContraption();
 	}
@@ -37,22 +40,22 @@ public class FlatContraption {
 	public static void main(String[] args) {
 		int[][] contraptionMap = {
 				{dust(0), dust(0), dust(0), dust(0), dust(0)},
-				{dust(0), none(), none(), none(), dust(0)},
-				{dust(0), none(), dust(0), none(), dust(0)},
-				{dust(0), none(), dust(0), dust(0), dust(0)},
-				{dust(0), none(),  dust(0),  none(),  none()}
+				{dust(0), dust(0), dust(0), dust(0), dust(0)},
+				{dust(0), dust(0), dust(0), dust(0), dust(0)},
+				{dust(0), dust(0), dust(0), dust(0), dust(0)},
+				{dust(0), dust(0),  dust(0),  dust(0),  dust(0)}
 		};
 		
-		BlockPos mainPos = new BlockPos(2, 0, 2);
-		int mainPosPower = 0;
+		BlockPos mainPos = new BlockPos(0, 0, 0);
+		int mainPosPower = 15;
 		
 		FlatContraption flatContraption = new FlatContraption(contraptionMap, mainPos, mainPosPower);
 		
-		//contraption.getDepth(0, mainPos, -1, true);
-		//System.out.println("Depth is " + contraption.highestDepth + ".");
+		flatContraption.getDepth(0, mainPos, -1, true);
+		System.out.println("Depth is " + flatContraption.highestDepth + ".");
 		
-		int[] result = flatContraption.searchForDeepest();
-		System.out.println("Deepest is " + result[0] + " with hash of " + result[1] + ".");
+		//int[] result = flatContraption.searchForDeepest();
+		//System.out.println("Deepest is " + result[0] + " with hash of " + result[1] + ".");
 	}
 	
 	public static int dust(int power) {
